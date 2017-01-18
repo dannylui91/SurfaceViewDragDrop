@@ -19,14 +19,10 @@ public class MainFragment extends Fragment {
     private View rootView;
     EditableView editableView;
     Bitmap icon;
-    ImageView icon1;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-//        icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-//        editableView = new EditableView(getActivity(), icon);
-//        return editableView;
         rootView = inflater.inflate(R.layout.fragment_main, container, false);
         return rootView;
     }
@@ -34,20 +30,58 @@ public class MainFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        icon1 = (ImageView) view.findViewById(R.id.icon1);
-        final RelativeLayout container = (RelativeLayout) view.findViewById(R.id.editable_view) ;
-        icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-        editableView = new EditableView(getActivity(), icon);
-        container.addView(editableView);
 
-        icon1.setOnClickListener(new View.OnClickListener() {
+
+        setupRecyclerView();
+        setupToolkit();
+        addSurfaceViewToFragment();
+    }
+
+
+
+    private void addSurfaceViewToFragment() {
+        RelativeLayout container = (RelativeLayout) rootView.findViewById(R.id.editable_view) ;
+        icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+        editableView = new EditableView(getActivity());
+        container.addView(editableView);
+    }
+
+    private void setupRecyclerView() {
+        ImageView iconImage = (ImageView) rootView.findViewById(R.id.icon1);
+        iconImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                ViewGroup owner = (ViewGroup) view.getParent();
-//                owner.removeView(view);
-                editableView.addView(BitmapFactory.decodeResource(getResources(), R.id.));
+                editableView.addView(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
             }
         });
+    }
+
+    private void setupToolkit() {
+        ImageView undoIv = (ImageView) rootView.findViewById(R.id.undo);
+        ImageView clearIv = (ImageView) rootView.findViewById(R.id.clear);
+        ImageView saveIv = (ImageView) rootView.findViewById(R.id.save);
+
+        undoIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editableView.undo();
+            }
+        });
+
+        clearIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editableView.clear();
+            }
+        });
+
+        saveIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editableView.save();
+            }
+        });
+
     }
 
     @Override
