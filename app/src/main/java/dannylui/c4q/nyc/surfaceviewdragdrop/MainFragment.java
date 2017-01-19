@@ -1,6 +1,5 @@
 package dannylui.c4q.nyc.surfaceviewdragdrop;
 
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -18,7 +17,6 @@ import android.widget.RelativeLayout;
 public class MainFragment extends Fragment {
     private View rootView;
     EditableView editableView;
-    Bitmap icon;
 
     @Nullable
     @Override
@@ -31,7 +29,6 @@ public class MainFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-
         setupRecyclerView();
         setupToolkit();
         addSurfaceViewToFragment();
@@ -41,7 +38,6 @@ public class MainFragment extends Fragment {
 
     private void addSurfaceViewToFragment() {
         RelativeLayout container = (RelativeLayout) rootView.findViewById(R.id.editable_view) ;
-        icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         editableView = new EditableView(getActivity());
         container.addView(editableView);
     }
