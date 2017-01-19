@@ -32,11 +32,18 @@
     </LinearLayout>
 
     <RelativeLayout
-        android:id="@+id/editable_view"
+        android:id="@+id/sv_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="50dp"
         android:layout_marginBottom="50dp">
+
+        <ImageView
+            android:id="@+id/bg_photo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#443456"
+            android:scaleType="fitXY"/>
     </RelativeLayout>
 
     <LinearLayout

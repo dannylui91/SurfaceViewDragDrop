@@ -3,6 +3,7 @@ package dannylui.c4q.nyc.surfaceviewdragdrop;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.PorterDuff;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
@@ -19,24 +20,85 @@ import java.util.Stack;
  * Created by Danny on 1/17/2017.
  */
 
-public class EditableView extends SurfaceView implements Runnable, View.OnTouchListener {
+public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouchListener {
     private Stack<MoveableIcon> iconStack = new Stack<>();
     private Thread t;
     private SurfaceHolder holder;
     private boolean isItOk = false;
     private boolean isIterating = false;
+    private Bitmap backgroundImage;
 
-    public EditableView(Context context) {
+    private Canvas canvas = null;
+    public static Bitmap lastCanvas = null;
+
+    public MainFragment mainFragment;
+
+    public MySurfaceView(Context context, Bitmap bmp, MainFragment mainFragment) {
         super(context);
+        this.mainFragment = mainFragment;
+        backgroundImage = bmp;
         setOnTouchListener(this);
         holder = getHolder();
 
+        setupPinchZoom(context);
+    }
+
+    public void run() {
+        while (isItOk) {
+            if (!holder.getSurface().isValid()) {
+                continue;
+            }
+            canvas = holder.lockCanvas();
+            if (lastCanvas == null) {
+                lastCanvas = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.RGB_565);
+                backgroundImage = Bitmap.createScaledBitmap(backgroundImage, canvas.getWidth(), canvas.getHeight(), false);
+            }
+            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            Iterator<MoveableIcon> it = iconStack.iterator();
+            while (it.hasNext()) {
+                isIterating = true;
+                MoveableIcon moveableIcon = it.next();
+                Bitmap bitmap = moveableIcon.getBitmap();
+                canvas.drawBitmap(bitmap, moveableIcon.getxPos() - bitmap.getWidth() / 2, moveableIcon.getyPos() - bitmap.getHeight() / 2, null);
+
+            }
+            isIterating = false;
+
+            holder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    public void addIcon(Bitmap bitmap) {
+        MoveableIcon newIcon = new MoveableIcon(bitmap, bitmap.getWidth(), bitmap.getHeight(), true);
+        if (!iconStack.isEmpty()) {
+            iconStack.peek().setActive(false);
+        }
+        while (true) {
+            if (!isIterating) {
+                iconStack.push(newIcon);
+                break;
+            }
+        }
+        System.out.println(iconStack);
+    }
+
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        switch (motionEvent.getAction()) {
+            case MotionEvent.ACTION_MOVE:
+                updateCurrentIconPosition(motionEvent.getX(), motionEvent.getY());
+                break;
+        }
+        return true;
+    }
+
+    private void setupPinchZoom(Context context) {
         Sensey.getInstance().init(context);
 
         PinchScaleDetector.PinchScaleListener pinchScaleListener = new PinchScaleDetector.PinchScaleListener() {
             @Override
-            public void onScale(ScaleGestureDetector scaleGestureDetector, boolean b) {
-                if (b) {
+            public void onScale(ScaleGestureDetector scaleGestureDetector, boolean scalingOut) {
+                if (scalingOut) {
                     // Scaling Out;
                     Iterator<MoveableIcon> it = iconStack.iterator();
                     while (it.hasNext()) {
@@ -56,9 +118,14 @@ public class EditableView extends SurfaceView implements Runnable, View.OnTouchL
                         MoveableIcon moveableIcon = it.next();
                         if (moveableIcon.isActive()) {
                             Bitmap bitmap = moveableIcon.getBitmap();
-                            Bitmap resizedBitmap = Bitmap.createScaledBitmap(
-                                    bitmap, bitmap.getWidth() - 10, bitmap.getHeight() - 10, false);
-                            moveableIcon.setBitmap(resizedBitmap);
+                            if (bitmap.getWidth() <= 50 && bitmap.getHeight() <= 50) {
+                                bitmap = Bitmap.createScaledBitmap(
+                                        bitmap, 50, 50, false);
+                            } else {
+                                bitmap = Bitmap.createScaledBitmap(
+                                        bitmap, bitmap.getWidth() - 10, bitmap.getHeight() - 10, false);
+                            }
+                            moveableIcon.setBitmap(bitmap);
                         }
                     }
                     System.out.println("Scaling in");
@@ -81,47 +148,6 @@ public class EditableView extends SurfaceView implements Runnable, View.OnTouchL
         };
 
         Sensey.getInstance().startPinchScaleDetection(pinchScaleListener);
-
-    }
-
-    public void run() {
-        while (isItOk) {
-            if (!holder.getSurface().isValid()) {
-                continue;
-            }
-            Canvas canvas = holder.lockCanvas();
-            canvas.drawARGB(255, 150, 150, 10);
-            Iterator<MoveableIcon> it = iconStack.iterator();
-            while (it.hasNext()) {
-                isIterating = true;
-                MoveableIcon moveableIcon = it.next();
-                Bitmap bitmap = moveableIcon.getBitmap();
-                canvas.drawBitmap(bitmap, moveableIcon.getxPos() - bitmap.getWidth() / 2, moveableIcon.getyPos() - bitmap.getHeight() / 2, null);
-            }
-            isIterating = false;
-            holder.unlockCanvasAndPost(canvas);
-        }
-    }
-
-    @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
-        //System.out.println("TOUCH MOTION ACTIVATED!!");
-
-        switch (motionEvent.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                System.out.println("DOWN");
-                //updateCurrentIconPosition(motionEvent.getX(), motionEvent.getY());
-                break;
-            case MotionEvent.ACTION_MOVE:
-
-                updateCurrentIconPosition(motionEvent.getX(), motionEvent.getY());
-                break;
-            case MotionEvent.ACTION_UP:
-                //updateCurrentIconPosition(motionEvent.getX(), motionEvent.getY());
-                break;
-
-        }
-        return true;
     }
 
     public void updateCurrentIconPosition(float x, float y) {
@@ -132,28 +158,13 @@ public class EditableView extends SurfaceView implements Runnable, View.OnTouchL
                 float currentX = currentActiveIcon.getxPos();
                 float currentY = currentActiveIcon.getyPos();
                 Bitmap bitmap = currentActiveIcon.getBitmap();
-                if (x >= currentX - bitmap.getWidth()/2 && x <= currentX + bitmap.getWidth()/2
-                        && y >= currentY - bitmap.getHeight()/2 && y <= currentY + bitmap.getHeight()/2) {
+                if (x >= currentX - bitmap.getWidth() / 2 && x <= currentX + bitmap.getWidth() / 2
+                        && y >= currentY - bitmap.getHeight() / 2 && y <= currentY + bitmap.getHeight() / 2) {
                     currentActiveIcon.setxPos(x);
                     currentActiveIcon.setyPos(y);
                 }
             }
         }
-    }
-
-    public void addView(Bitmap bitmap) {
-        MoveableIcon newIcon = new MoveableIcon(bitmap, bitmap.getWidth(), bitmap.getHeight(), true);
-        //Iterator<MoveableIcon> it = getIterator();
-        if (!iconStack.isEmpty()) {
-            iconStack.peek().setActive(false);
-        }
-        while (true) {
-            if (!isIterating) {
-                iconStack.push(newIcon);
-                break;
-            }
-        }
-        System.out.println(iconStack);
     }
 
     public void undo() {
@@ -180,7 +191,18 @@ public class EditableView extends SurfaceView implements Runnable, View.OnTouchL
     }
 
     public void save() {
-        System.out.println("SAVING...");
+        mainFragment.readyForSave();
+
+        canvas.setBitmap(lastCanvas);
+        canvas.drawBitmap(backgroundImage, 0, 0, null);
+        Iterator<MoveableIcon> it = iconStack.iterator();
+        while (it.hasNext()) {
+            isIterating = true;
+            MoveableIcon moveableIcon = it.next();
+            Bitmap bitmap = moveableIcon.getBitmap();
+            canvas.setBitmap(lastCanvas);
+            canvas.drawBitmap(bitmap, moveableIcon.getxPos() - bitmap.getWidth() / 2, moveableIcon.getyPos() - bitmap.getHeight() / 2, null);
+        }
     }
 
     public void onPause() {
@@ -202,6 +224,7 @@ public class EditableView extends SurfaceView implements Runnable, View.OnTouchL
         t.start();
     }
 
+    // For sensey libray to work
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         // Setup onTouchEvent for detecting type of touch gesture

@@ -1,7 +1,11 @@
 package dannylui.c4q.nyc.surfaceviewdragdrop;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -15,8 +19,19 @@ import android.widget.RelativeLayout;
  */
 
 public class MainFragment extends Fragment {
+    public static final String IMAGE_KEY = "image.key";
     private View rootView;
-    EditableView editableView;
+    private RelativeLayout surfaceViewContainer;
+    private Bitmap image;
+    private MySurfaceView mySurfaceView;
+
+    public static MainFragment newInstance(@Nullable Parcelable bmp) {
+        MainFragment mainFragment = new MainFragment();
+        Bundle args = new Bundle();
+        args.putParcelable(IMAGE_KEY, bmp);
+        mainFragment.setArguments(args);
+        return mainFragment;
+    }
 
     @Nullable
     @Override
@@ -25,29 +40,41 @@ public class MainFragment extends Fragment {
         return rootView;
     }
 
+    public void readyForSave(){
+        Intent intent = new Intent(rootView.getContext(), SaveActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        image = getArguments().getParcelable(IMAGE_KEY);
         setupRecyclerView();
         setupToolkit();
         addSurfaceViewToFragment();
     }
 
-
-
     private void addSurfaceViewToFragment() {
-        RelativeLayout container = (RelativeLayout) rootView.findViewById(R.id.editable_view) ;
-        editableView = new EditableView(getActivity());
-        container.addView(editableView);
+        surfaceViewContainer = (RelativeLayout) rootView.findViewById(R.id.sv_container) ;
+
+        // Image goes behind/under the surface view
+        ImageView backgroundImage = (ImageView) rootView.findViewById(R.id.bg_photo);
+        backgroundImage.setImageBitmap(image);
+
+        // Sets the surface view on top and transparent
+        mySurfaceView = new MySurfaceView(getActivity(), image, this);
+        mySurfaceView.setZOrderOnTop(true);
+        mySurfaceView.getHolder().setFormat(PixelFormat.TRANSPARENT);
+        surfaceViewContainer.addView(mySurfaceView);
     }
 
+    // TODO Real recycler view
     private void setupRecyclerView() {
         ImageView iconImage = (ImageView) rootView.findViewById(R.id.icon1);
         iconImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                editableView.addView(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+                mySurfaceView.addIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
             }
         });
     }
@@ -60,21 +87,21 @@ public class MainFragment extends Fragment {
         undoIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                editableView.undo();
+                mySurfaceView.undo();
             }
         });
 
         clearIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                editableView.clear();
+                mySurfaceView.clear();
             }
         });
 
         saveIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                editableView.save();
+                mySurfaceView.save();
             }
         });
 
@@ -83,12 +110,12 @@ public class MainFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        editableView.onPause();
+        mySurfaceView.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        editableView.onResume();
+        mySurfaceView.onResume();
     }
 }
