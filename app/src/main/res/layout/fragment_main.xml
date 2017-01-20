@@ -46,18 +46,26 @@
             android:scaleType="fitXY"/>
     </RelativeLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <!--<LinearLayout-->
+        <!--android:orientation="horizontal"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="50dp"-->
+        <!--android:background="#D7CCC8"-->
+        <!--android:layout_alignParentBottom="true">-->
+
+        <!--<ImageView-->
+            <!--android:id="@+id/icon1"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:src="@mipmap/ic_launcher"/>-->
+    <!--</LinearLayout>-->
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerview"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="#D7CCC8"
         android:layout_alignParentBottom="true">
 
-        <ImageView
-            android:id="@+id/icon1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@mipmap/ic_launcher"/>
-    </LinearLayout>
+    </android.support.v7.widget.RecyclerView>
 
 </RelativeLayout>

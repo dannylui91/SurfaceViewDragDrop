@@ -2,17 +2,21 @@ package dannylui.c4q.nyc.surfaceviewdragdrop;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Danny on 1/17/2017.
@@ -49,9 +53,10 @@ public class MainFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         image = getArguments().getParcelable(IMAGE_KEY);
-        setupRecyclerView();
         setupToolkit();
         addSurfaceViewToFragment();
+
+        setupRecyclerView();
     }
 
     private void addSurfaceViewToFragment() {
@@ -70,13 +75,14 @@ public class MainFragment extends Fragment {
 
     // TODO Real recycler view
     private void setupRecyclerView() {
-        ImageView iconImage = (ImageView) rootView.findViewById(R.id.icon1);
-        iconImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mySurfaceView.addIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
-            }
-        });
+        List<Integer> iconIds = Arrays.asList(
+                R.drawable.andres, R.drawable.ashique2, R.drawable.eddie
+        );
+
+        RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);
+        recyclerView.setLayoutManager(new LinearLayoutManager(rootView.getContext(), LinearLayoutManager.HORIZONTAL, false));
+        recyclerView.setAdapter(new FaceIconAdapter(mySurfaceView, iconIds));
+
     }
 
     private void setupToolkit() {
