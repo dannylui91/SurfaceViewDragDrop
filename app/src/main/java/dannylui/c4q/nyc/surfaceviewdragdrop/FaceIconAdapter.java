@@ -15,7 +15,6 @@ import java.util.List;
  * Created by Danny on 1/20/2017.
  */
 public class FaceIconAdapter extends RecyclerView.Adapter<FaceIconAdapter.FaceViewHolder> {
-    public static Bitmap bitmap = null;
     private List<Integer> faces = new ArrayList<>();
     private MySurfaceView mySurfaceView = null;
 
@@ -60,7 +59,5 @@ public class FaceIconAdapter extends RecyclerView.Adapter<FaceIconAdapter.FaceVi
                 }
             });
         }
-
-
     }
 }

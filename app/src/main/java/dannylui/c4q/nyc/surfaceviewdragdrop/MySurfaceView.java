@@ -24,14 +24,15 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
     private Stack<MoveableIcon> iconStack = new Stack<>();
     private Thread t;
     private SurfaceHolder holder;
-    private boolean isItOk = false;
-    private boolean isIterating = false;
+    private boolean isViewReady = false;
+    private boolean isIteratingStack = false;
     private Bitmap backgroundImage;
 
     private Canvas canvas = null;
     public static Bitmap lastCanvas = null;
 
     public MainFragment mainFragment;
+    private boolean isScaling = false;
 
     public MySurfaceView(Context context, Bitmap bmp, MainFragment mainFragment) {
         super(context);
@@ -44,7 +45,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
     }
 
     public void run() {
-        while (isItOk) {
+        while (isViewReady) {
             if (!holder.getSurface().isValid()) {
                 continue;
             }
@@ -56,13 +57,13 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
             canvas.drawColor(0, PorterDuff.Mode.CLEAR);
             Iterator<MoveableIcon> it = iconStack.iterator();
             while (it.hasNext()) {
-                isIterating = true;
+                isIteratingStack = true;
                 MoveableIcon moveableIcon = it.next();
                 Bitmap bitmap = moveableIcon.getBitmap();
                 canvas.drawBitmap(bitmap, moveableIcon.getxPos() - bitmap.getWidth() / 2, moveableIcon.getyPos() - bitmap.getHeight() / 2, null);
 
             }
-            isIterating = false;
+            isIteratingStack = false;
 
             holder.unlockCanvasAndPost(canvas);
         }
@@ -74,7 +75,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
             iconStack.peek().setActive(false);
         }
         while (true) {
-            if (!isIterating) {
+            if (!isIteratingStack) {
                 iconStack.push(newIcon);
                 break;
             }
@@ -86,7 +87,9 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
     public boolean onTouch(View view, MotionEvent motionEvent) {
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                updateCurrentIconPosition(motionEvent.getX(), motionEvent.getY());
+                if (!isScaling) {
+                    updateCurrentIconPosition(motionEvent.getX(), motionEvent.getY());
+                }
                 break;
         }
         return true;
@@ -100,54 +103,60 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
             public void onScale(ScaleGestureDetector scaleGestureDetector, boolean scalingOut) {
                 if (scalingOut) {
                     // Scaling Out;
-                    Iterator<MoveableIcon> it = iconStack.iterator();
-                    while (it.hasNext()) {
-                        MoveableIcon moveableIcon = it.next();
-                        if (moveableIcon.isActive()) {
-                            Bitmap bitmap = moveableIcon.getBitmap();
-                            Bitmap resizedBitmap = Bitmap.createScaledBitmap(
-                                    bitmap, bitmap.getWidth() + 10, bitmap.getHeight() + 10, false);
-                            moveableIcon.setBitmap(resizedBitmap);
-                        }
-                    }
-                    System.out.println("Scaling out");
+                    scaleOutIcon();
                 } else {
                     // Scaling In
-                    Iterator<MoveableIcon> it = iconStack.iterator();
-                    while (it.hasNext()) {
-                        MoveableIcon moveableIcon = it.next();
-                        if (moveableIcon.isActive()) {
-                            Bitmap bitmap = moveableIcon.getBitmap();
-                            if (bitmap.getWidth() <= 50 && bitmap.getHeight() <= 50) {
-                                bitmap = Bitmap.createScaledBitmap(
-                                        bitmap, 50, 50, false);
-                            } else {
-                                bitmap = Bitmap.createScaledBitmap(
-                                        bitmap, bitmap.getWidth() - 10, bitmap.getHeight() - 10, false);
-                            }
-                            moveableIcon.setBitmap(bitmap);
-                        }
-                    }
-                    System.out.println("Scaling in");
+                    scaleInIcon();
                 }
             }
 
             @Override
             public void onScaleStart(ScaleGestureDetector scaleGestureDetector) {
                 // Scaling Started
-                System.out.println("STARTED SCALING");
-
+                isScaling = true;
             }
 
             @Override
             public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
                 // Scaling Stopped
-                System.out.println("STOPPED SCALING");
-
+                isScaling = false;
             }
         };
 
         Sensey.getInstance().startPinchScaleDetection(pinchScaleListener);
+    }
+
+    private void scaleOutIcon() {
+        Iterator<MoveableIcon> it = iconStack.iterator();
+        while (it.hasNext()) {
+            MoveableIcon moveableIcon = it.next();
+            if (moveableIcon.isActive()) {
+                Bitmap bitmap = moveableIcon.getBitmap();
+                Bitmap resizedBitmap = Bitmap.createScaledBitmap(
+                        bitmap, bitmap.getWidth() + 10, bitmap.getHeight() + 10, true);
+                moveableIcon.setBitmap(resizedBitmap);
+
+            }
+        }
+    }
+
+    private void scaleInIcon() {
+        Iterator<MoveableIcon> it = iconStack.iterator();
+        while (it.hasNext()) {
+            MoveableIcon moveableIcon = it.next();
+            if (moveableIcon.isActive()) {
+                Bitmap bitmap = moveableIcon.getBitmap();
+                if (bitmap.getWidth() <= 150 && bitmap.getHeight() <= 150) {
+                    bitmap = Bitmap.createScaledBitmap(
+                            bitmap, 150, 150, false);
+                } else {
+                    bitmap = Bitmap.createScaledBitmap(
+                            bitmap, bitmap.getWidth() - 10, bitmap.getHeight() - 10, true);
+                }
+                moveableIcon.setBitmap(bitmap);
+
+            }
+        }
     }
 
     public void updateCurrentIconPosition(float x, float y) {
@@ -169,7 +178,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
 
     public void undo() {
         while (true) {
-            if (!isIterating) {
+            if (!isIteratingStack) {
                 if (!iconStack.isEmpty()) {
                     iconStack.pop();
                 }
@@ -183,7 +192,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
 
     public void clear() {
         while (true) {
-            if (!isIterating) {
+            if (!isIteratingStack) {
                 iconStack.clear();
                 break;
             }
@@ -197,7 +206,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
         canvas.drawBitmap(backgroundImage, 0, 0, null);
         Iterator<MoveableIcon> it = iconStack.iterator();
         while (it.hasNext()) {
-            isIterating = true;
+            isIteratingStack = true;
             MoveableIcon moveableIcon = it.next();
             Bitmap bitmap = moveableIcon.getBitmap();
             canvas.setBitmap(lastCanvas);
@@ -206,7 +215,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
     }
 
     public void onPause() {
-        isItOk = false;
+        isViewReady = false;
         while (true) {
             try {
                 t.join();
@@ -219,7 +228,7 @@ public class MySurfaceView extends SurfaceView implements Runnable, View.OnTouch
     }
 
     public void onResume() {
-        isItOk = true;
+        isViewReady = true;
         t = new Thread(this);
         t.start();
     }

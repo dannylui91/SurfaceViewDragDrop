@@ -55,7 +55,6 @@ public class MainFragment extends Fragment {
         image = getArguments().getParcelable(IMAGE_KEY);
         setupToolkit();
         addSurfaceViewToFragment();
-
         setupRecyclerView();
     }
 
@@ -73,10 +72,11 @@ public class MainFragment extends Fragment {
         surfaceViewContainer.addView(mySurfaceView);
     }
 
-    // TODO Real recycler view
     private void setupRecyclerView() {
         List<Integer> iconIds = Arrays.asList(
-                R.drawable.andres, R.drawable.ashique2, R.drawable.eddie
+                R.drawable.andres, R.drawable.ashique2, R.drawable.eddie, R.drawable.helen,
+                R.drawable.jj, R.drawable.jon, R.drawable.jordan, R.drawable.josev,
+                R.drawable.lily, R.drawable.lilycat, R.drawable.mila, R.drawable.shannon
         );
 
         RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);

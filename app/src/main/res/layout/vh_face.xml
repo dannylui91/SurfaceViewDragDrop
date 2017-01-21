@@ -2,6 +2,9 @@
 <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/icon_image"
     android:layout_width="50dp"
-    android:layout_height="50dp" />
+    android:layout_height="50dp"
+    android:layout_marginLeft="5dp"
+    android:layout_marginRight="5dp"
+    android:background="@drawable/icon_black_border"/>
 
 
